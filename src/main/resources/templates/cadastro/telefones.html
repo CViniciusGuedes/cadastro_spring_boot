@@ -7,13 +7,13 @@
 	<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 	<link type="text/css" rel="stylesheet" href="/materialize/css/materialize.css" media="screen,projection" />
 	<link type="text/css" rel="stylesheet" href="/materialize/css/materialize.min.css" media="screen,projection" />
-	
+
 	<style type="text/css">
-		form input[type=submit]{
+		form input[type=submit] {
 			color: white;
 		}
 	</style>
-	
+
 </head>
 
 <body>
@@ -29,8 +29,15 @@
 			<p>Idade: <span th:text="${p.idade}"></span></p>
 		</div>
 	</div>
-	
+
 	<h5>Telefones</h5>
+
+	<br />
+	<div th:each="m : ${msg}">
+		<span th:text="${m}"></span>
+	</div>
+	<br />
+
 	<div class="row">
 		<form th:action="@{/addFonePessoa/{pessoaId}(pessoaId=${pessoaObj.id})}" method="post" class="col s12">
 			<div class="row">
@@ -43,17 +50,17 @@
 					<input id="tipo" name="tipo" class="validate">
 				</div>
 				<input type="submit" value="Adicionar" class="waves-effect waves-light btn">
-				
+
 			</div>
 		</form>
 	</div>
-	
+
 	<table class="striped">
 		<tr th:each="fone : ${telefones}">
 			<td th:text="${fone.numero}"></td>
 			<td th:text="${fone.tipo}"></td>
 			<td><a th:href="@{/removerTelefone/{idTelefone}(idTelefone=${fone.id})}">Excluir</a></td>
-			
+
 		</tr>
 	</table>
 
