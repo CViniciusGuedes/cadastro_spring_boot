@@ -1,13 +1,19 @@
 package curso.springboot.controller;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import curso.springboot.repository.ProfissaoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
 import org.springframework.validation.ObjectError;
@@ -15,6 +21,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.ModelAndView;
 
 import curso.springboot.model.Pessoa;
@@ -44,8 +51,8 @@ public class PessoaController {
 		return modelAndView;
 	}
 	
-	@PostMapping("/salvarPessoa")
-	public ModelAndView salvar(@Valid Pessoa pessoa, BindingResult bindingResult) {
+	@PostMapping(value = "/salvarPessoa", consumes = {"multipart/form-data"})
+	public ModelAndView salvar(@Valid Pessoa pessoa, BindingResult bindingResult, final MultipartFile file) throws IOException {
 
 		pessoa.setTelefones(telefoneRepository.getTelefones(pessoa.getId()));
 		
@@ -63,6 +70,19 @@ public class PessoaController {
 			modelAndView.addObject("msg", msg);
 			modelAndView.addObject("profissoes", profissaoRepository.findAll());
 			return modelAndView;
+		}
+
+		if(file.getSize() > 0){
+			pessoa.setCurriculo(file.getBytes());
+			pessoa.setTipoFileCurriculo(file.getContentType());
+			pessoa.setNomeFileCurriculo(file.getOriginalFilename());
+		} else {
+			if(pessoa.getId() != null && pessoa.getId() > 0){
+				Pessoa pessoaTemp = pessoaRepository.findById(pessoa.getId()).get();
+				pessoa.setCurriculo(pessoaTemp.getCurriculo());
+				pessoa.setTipoFileCurriculo(pessoaTemp.getTipoFileCurriculo());
+				pessoa.setNomeFileCurriculo(pessoaTemp.getNomeFileCurriculo());
+			}
 		}
 		
 		pessoaRepository.save(pessoa);
@@ -188,5 +208,37 @@ public class PessoaController {
 		modelAndView.addObject("telefones", telefoneRepository.getTelefones(pessoa.getId()));
 		return modelAndView;
 	}
+
+//	@GetMapping("/baixarCurriculo/{idPessoa}")
+//	public void baixarCurriculo(@PathVariable("idPessoa") Long idPessoa, HttpServletResponse response) throws IOException {
+//
+//		Pessoa pessoa = pessoaRepository.findById(idPessoa).get();
+//		if(pessoa.getCurriculo() != null){
+//			response.setContentLength(pessoa.getCurriculo().length);
+//			response.setContentType(pessoa.getTipoFileCurriculo());
+//			String headerKey = "Content-Disposition";
+//			String headerValue = String.format("attachment; filename=\"%s\"", pessoa.getNomeFileCurriculo());
+//			response.setHeader(headerKey, headerValue);
+//
+//			response.getOutputStream().write(pessoa.getCurriculo());
+//		}
+//	}
+
+	@GetMapping("/baixarCurriculo/{idPessoa}")
+	public ResponseEntity<byte[]> baixarCurriculo(@PathVariable("idPessoa") Long idPessoa) throws IOException {
+		Pessoa pessoa = pessoaRepository.findById(idPessoa).orElse(null);
+
+		if (pessoa != null && pessoa.getCurriculo() != null) {
+			HttpHeaders headers = new HttpHeaders();
+			headers.setContentType(MediaType.APPLICATION_OCTET_STREAM);
+			headers.setContentDispositionFormData("attachment", pessoa.getNomeFileCurriculo());
+			headers.setContentLength(pessoa.getCurriculo().length);
+
+			return new ResponseEntity<>(pessoa.getCurriculo(), headers, HttpStatus.OK);
+		} else {
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+		}
+	}
+
 
 }
