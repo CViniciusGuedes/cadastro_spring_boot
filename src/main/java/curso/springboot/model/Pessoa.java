@@ -7,12 +7,7 @@ import javax.validation.constraints.Min;
 import javax.validation.constraints.NotEmpty;
 import javax.validation.constraints.NotNull;
 
-import jakarta.persistence.CascadeType;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.*;
 
 @Entity
 public class Pessoa implements Serializable {
@@ -44,6 +39,17 @@ public class Pessoa implements Serializable {
 	private String uf;
 	private String ibge;
 	private String sexopessoa;
+
+	@ManyToOne
+	private Profissao profissao;
+
+	public Profissao getProfissao() {
+		return profissao;
+	}
+
+	public void setProfissao(Profissao profissao) {
+		this.profissao = profissao;
+	}
 
 	public void setSexopessoa(String sexopessoa) {
 		this.sexopessoa = sexopessoa;

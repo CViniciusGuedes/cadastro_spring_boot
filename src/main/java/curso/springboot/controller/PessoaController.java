@@ -6,6 +6,7 @@ import java.util.Optional;
 
 import javax.validation.Valid;
 
+import curso.springboot.repository.ProfissaoRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.validation.BindingResult;
@@ -29,6 +30,9 @@ public class PessoaController {
 	
 	@Autowired
 	private TelefoneRepository telefoneRepository;
+
+	@Autowired
+	private ProfissaoRepository profissaoRepository;
 	
 	@GetMapping("/cadastroPessoa")
 	public ModelAndView inicio() {
@@ -36,6 +40,7 @@ public class PessoaController {
 		modelAndView.addObject("pessoaObj", new Pessoa());
 		Iterable<Pessoa> pessoasIt = pessoaRepository.findAll();
 		modelAndView.addObject("pessoas", pessoasIt);
+		modelAndView.addObject("profissoes", profissaoRepository.findAll());
 		return modelAndView;
 	}
 	
@@ -56,6 +61,7 @@ public class PessoaController {
 			}
 			
 			modelAndView.addObject("msg", msg);
+			modelAndView.addObject("profissoes", profissaoRepository.findAll());
 			return modelAndView;
 		}
 		
@@ -76,18 +82,35 @@ public class PessoaController {
 		andView.addObject("pessoaObj", new Pessoa());
 		return andView;
 	}
-	
+
+//	@GetMapping("/editarPessoa/{idPessoa}")
+//	public ModelAndView editar(@PathVariable("idPessoa") Long idPessoa) {
+//
+//		Optional<Pessoa> pessoa = pessoaRepository.findById(idPessoa);
+//
+//		ModelAndView modelAndView = new ModelAndView("cadastro/cadastroPessoa");
+//		modelAndView.addObject("pessoaObj", pessoa.get());
+//		modelAndView.addObject("profissoes", profissaoRepository.findAll());
+//		return modelAndView;
+//	}
+
 	@GetMapping("/editarPessoa/{idPessoa}")
 	public ModelAndView editar(@PathVariable("idPessoa") Long idPessoa) {
-		
+
 		Optional<Pessoa> pessoa = pessoaRepository.findById(idPessoa);
-		
-		ModelAndView modelAndView = new ModelAndView("cadastro/cadastroPessoa");
-		modelAndView.addObject("pessoaObj", pessoa.get());
-		return modelAndView;
+
+		if (pessoa.isPresent()) {
+			ModelAndView modelAndView = new ModelAndView("cadastro/cadastroPessoa");
+			modelAndView.addObject("pessoaObj", pessoa.get());
+			modelAndView.addObject("profissoes", profissaoRepository.findAll());
+			return modelAndView;
+		} else {
+			// Retorna uma página de erro ou lança uma exceção, conforme sua preferência
+			return new ModelAndView("error/404");
+		}
 	}
-	
-	
+
+
 	@GetMapping("/removerPessoa/{idPessoa}")
 	public ModelAndView excluir(@PathVariable("idPessoa") Long idPessoa) {
 		
@@ -100,9 +123,19 @@ public class PessoaController {
 	}
 	
 	@PostMapping("/pesquisarPessoa")
-	public ModelAndView pesquisar(@RequestParam("nomePesquisa") String nomePesquisa) {
+	public ModelAndView pesquisar(@RequestParam("nomePesquisa") String nomePesquisa,
+								  @RequestParam("pesqSexo") String pesqSexo) {
+
+		List<Pessoa> pessoas = new ArrayList<Pessoa>();
+
+		if(pesqSexo != null && !pesqSexo.isEmpty()){
+			pessoas = pessoaRepository.findPessoaByNameSexo(nomePesquisa, pesqSexo);
+		} else {
+			pessoas = pessoaRepository.findPessoaByName(nomePesquisa);
+		}
+
 		ModelAndView modelAndView = new ModelAndView("cadastro/cadastroPessoa");
-		modelAndView.addObject("pessoas", pessoaRepository.findPessoaByName(nomePesquisa));
+		modelAndView.addObject("pessoas", pessoas);
 		modelAndView.addObject("pessoaObj", new Pessoa());
 		return modelAndView;
 	}
